@@ -75,7 +75,7 @@ The `version` column in `seats` supports optimistic locking. The `locked_at` and
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/ticket-booking-system.git
+git clone https://github.com/Chakshu097/Advanced-Ticket-Booking-System.git
 cd ticket-booking-system
 ```
 
@@ -85,36 +85,18 @@ cd ticket-booking-system
 createdb ticket_booking
 ```
 
-3. Run the SQL files in order:
+3. Run the SQL file
 
 ```bash
-psql -d ticket_booking -f sql/01_schema.sql
-psql -d ticket_booking -f sql/02_seed_data.sql
-psql -d ticket_booking -f sql/03_booking_transaction.sql
-psql -d ticket_booking -f sql/04_parallel_booking.sql
-psql -d ticket_booking -f sql/05_deadlock_simulation.sql
-psql -d ticket_booking -f sql/06_optimistic_locking.sql
-psql -d ticket_booking -f sql/07_failure_rollback.sql
-psql -d ticket_booking -f sql/08_isolation_levels.sql
-psql -d ticket_booking -f sql/09_bonus_timeout_queue.sql
+psql -d ticket_booking -f sql/Ticket_booking.sql
 ```
-
-4. Run verification queries to inspect system state:
-
-```bash
-psql -d ticket_booking -f sql/10_verification_queries.sql
-```
-
-> Note: Files 03 through 09 define functions and include example usage. To test deadlock scenarios (Q4) and isolation levels (Q7), open two separate `psql` sessions and run the indicated blocks interleaved, as described in the comments inside each file.
-
----
 
 ## File Structure
 
 ```
 ticket-booking-system/
 ├── README.md
-└── sql/
+└── Ticket_booking/
     ├── 01_schema.sql               -- Table definitions, constraints, indexes
     ├── 02_seed_data.sql            -- Sample users, shows, and seats
     ├── 03_booking_transaction.sql  -- Q2: book_seat() with FOR UPDATE NOWAIT
@@ -133,7 +115,6 @@ ticket-booking-system/
 
 ### Q1 — Database Design
 
-**File:** `sql/01_schema.sql`
 
 Five tables are created with appropriate primary keys, foreign keys, and check constraints. The `seats` table includes a `status` column constrained to `AVAILABLE`, `LOCKED`, or `BOOKED`. Indexes are added on frequently filtered columns to support concurrent query performance.
 
@@ -141,7 +122,6 @@ Five tables are created with appropriate primary keys, foreign keys, and check c
 
 ### Q2 — Transaction-Safe Booking
 
-**File:** `sql/03_booking_transaction.sql`
 
 The `book_seat(p_user_id, p_seat_id)` function performs a booking in a single atomic operation:
 
@@ -163,15 +143,11 @@ COMMIT;
 
 ### Q3 — Parallel Booking with SKIP LOCKED
 
-**File:** `sql/04_parallel_booking.sql`
-
 The `book_next_available_seat(p_user_id, p_show_id)` function allows multiple sessions to book seats at the same time without blocking each other. It uses `FOR UPDATE SKIP LOCKED`, which skips rows that are already locked by another transaction and picks the next available one. This eliminates queuing at the database level and improves throughput significantly under concurrent load.
 
 ---
 
 ### Q4 — Deadlock Simulation and Prevention
-
-**File:** `sql/05_deadlock_simulation.sql`
 
 **Part A — Simulation:**
 
@@ -190,8 +166,6 @@ The `book_multiple_seats(p_user_id, p_seat_ids[])` function prevents deadlocks b
 
 ### Q5 — Optimistic Locking
 
-**File:** `sql/06_optimistic_locking.sql`
-
 The `seats` table has a `version` integer column. The `book_seat_optimistic(p_user_id, p_seat_id, p_known_version)` function:
 
 1. Reads the seat without acquiring any lock.
@@ -205,8 +179,6 @@ This approach is suitable for workloads with many reads and few write conflicts,
 
 ### Q6 — Failure and Rollback Handling
 
-**File:** `sql/07_failure_rollback.sql`
-
 The `book_seat_with_payment(p_user_id, p_seat_id, p_payment_ok)` function simulates a real two-phase booking:
 
 1. The seat is locked and set to `LOCKED`.
@@ -218,8 +190,6 @@ If payment fails, a `RAISE EXCEPTION` is triggered. PostgreSQL rolls back the en
 ---
 
 ### Q7 — Isolation Level Analysis
-
-**File:** `sql/08_isolation_levels.sql`
 
 **READ COMMITTED (default):**
 
@@ -234,8 +204,6 @@ Transactions are guaranteed to produce results consistent with some serial (one-
 ---
 
 ### Q8 — Auto-Release Timeout and Waiting Queue
-
-**File:** `sql/09_bonus_timeout_queue.sql`
 
 **Auto-release:**
 
